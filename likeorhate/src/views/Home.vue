@@ -1,11 +1,15 @@
 <style>
-  good {
-    background-color: blue;
-    color: white;
+  .good {
+    background-color: #c7ffd4;
+    color: black;
   }
-  bad {
-    background-color: red;
-    color: white;
+
+  .bad {
+    background-color: #ffc9d5;
+    color: black;
+  }
+  .default {
+    color: black;
   }
 </style>
 <template>
@@ -20,7 +24,8 @@
         <v-icon>done</v-icon>
         <span> Classify</span>
       </v-btn>
-      <v-btn flat color="teal" value="openfile">
+      <input type="file" ref="file" style="display: none" @change="onFileChange" accept="text/plain">
+      <v-btn flat color="teal" value="openfile" @click="$refs.file.click()">
         <v-icon>open_in_new</v-icon>
         <span> Open File</span>
       </v-btn>
@@ -28,8 +33,7 @@
 
     <v-layout>
       <v-card height="430" width="100%" style="overflow:scroll;">
-        <div style="margin: 10px">
-          {{highligted}}
+        <div id="view" style="margin: 10px">
         </div>
       </v-card>
     </v-layout>
@@ -51,6 +55,8 @@
 
 <script>
   import axios from 'axios'
+  import fs from 'fs'
+
   export default {
     components: {},
     data: () => {
@@ -60,27 +66,71 @@
       }
     },
     methods: {
+      onFileChange (e) {
+        let files = e.target.files || e.dataTransfer.files
+        if (files.length === 0) {
+          return
+        }
+        fs.readFile(files[0].path, 'utf8', (err, data) => {
+          if (err) {
+            console.log(err)
+            this.text = 'cannot read file'
+          } else {
+            this.text = data
+          }
+          e.value = ''
+        })
+        console.log(files[0])
+      },
       processText () {
         let splited = this.text.split('.')
-        let result = ''
-        let type = ''
-        splited.forEach(function (element) {
-          console.log(element)
-          axios.post('http://localhost:5000', { text: element }).then(res => {
-            if(res.status !== 200) {
+        this.highligted = this.text
+        async function getData (param) {
+          try {
+            let res = await axios({
+              method: 'post',
+              url: 'http://127.0.0.1:5000',
+              timeout: 8000,
+              data: { text: param }
+            })
+            if (res.status !== 200) {
+              // test for status you want, etc
+              console.log(res.status)
               this.highligted = 'invalid text'
               return
             }
+            // Don't forget to return something
+            let result = 0
+            console.log(res.data)
+            if (res.data === '긍정적') {
+              result = 1
+            } else if (res.data === '오류') {
+              result = 2
+            }
+            return { data: result, text: param }
+          } catch (err) {
+            console.error(err)
+            this.highligted = 'error'
+          }
+        }
 
+        async function makeSpanned () {
+          let types = ['bad', 'good', 'default']
+          let spanned = ''
+          for (let i in splited) {
+            await getData(splited[i]).then((res) => {
+              console.log(res)
+              spanned += '<span class="' + types[res.data] + '">' + res.text + '</span>'
+            })
+          }
+          console.log('result: ' + spanned)
+          return spanned
+        }
 
-            if(res.data === '긍정적')
-              type = 'good'
-            else
-              type = 'bad'
-            result += '<span class=' + type + '>' + element + '</span>'
-          })
+        makeSpanned().then(text => {
+          document.getElementById('view').innerHTML = text
+          console.log(text)
         })
-        this.highligted = result
       }
     }
   }

@@ -1,3 +1,13 @@
+<style>
+  .cards {
+    width: 50%;
+    margin: 10px;
+    height: 70vh;
+  }
+  .in-cards {
+    margin: 15px;
+  }
+</style>
 <template>
   <v-layout>
     <v-toolbar app>
@@ -6,8 +16,22 @@
         <span class="text-lowercase font-weight-light"> : text emotion classifier</span>
       </v-toolbar-title>
     </v-toolbar>
-    <div class="about">
-      <h1>This is an about page</h1>
-    </div>
+    <v-container fill-height>
+      <v-card class="cards">
+        <div class="in-cards">
+          <span class="headline">함종현</span>
+        </div>
+      </v-card>
+      <v-card class="cards">
+        <div class="in-cards">
+          <span class="headline">LikeOrHate</span>
+        </div>
+      </v-card>
+      <v-card class="cards">
+        <div class="in-cards">
+          <span class="headline">박철완</span>
+        </div>
+      </v-card>
+    </v-container>
   </v-layout>
 </template>
